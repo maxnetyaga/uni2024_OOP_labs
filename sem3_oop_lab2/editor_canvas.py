@@ -2,45 +2,49 @@ from typing import Literal
 from abc import ABC, abstractmethod
 import tkinter as tk
 
-Shapes = Literal["Dot", "Line", "Rectangle", "Ellipse"]
+ShapeNames = Literal["Dot", "Line", "Rectangle", "Ellipse"]
 
 
 class EditorCanvas(tk.Canvas):
     def __init__(self, parent):
         super().__init__(parent, bg="white")
 
-        self.shapes = []
-        self._shape_strategy: _ShapeStrategy = None
+        self._shape_to_draw: ShapeNames = None
+        self._editable_shape: _Shape = None
+        self._shapes = {}
 
         # Bind mouse events
         self.bind("<ButtonPress-1>", self.on_mouse_down)
         self.bind("<B1-Motion>", self.on_mouse_drag)
         self.bind("<ButtonRelease-1>", self.on_mouse_up)
 
-    def select_shape(self, strategy_name: Shapes):
-        self._shape_strategy = _SHAPE_STRATEGIES[strategy_name]()
+    def select_shape(self, shape_name: ShapeNames):
+        self._shape_to_draw = shape_name
 
     def on_mouse_down(self, event):
-        if not self._shape_strategy:
+        if not self._shape_to_draw:
             return
-        self._shape_strategy.start_drawing(self, event)
+
+        self._editable_shape = _SHAPES[self._shape_to_draw]()
+        self._editable_shape.start_drawing(self, event)
 
     def on_mouse_drag(self, event):
-        if not self._shape_strategy:
+        if not self._shape_to_draw:
             return
-        self._shape_strategy.draw(self, event)
+        self._editable_shape.draw(self, event)
 
     def on_mouse_up(self, event):
-        if not self._shape_strategy:
+        if not self._shape_to_draw:
             return
-        self._shape_strategy.stop_drawing(self, event)
+        self._editable_shape.stop_drawing(self, event)
+        self._editable_shape = None
 
     def clear_canvas(self):
         self.delete("all")
-        self.shapes.clear()
+        self._shapes.clear()
 
 
-class _ShapeStrategy(ABC):
+class _Shape(ABC):
     def __init__(self):
         super().__init__()
 
@@ -50,7 +54,7 @@ class _ShapeStrategy(ABC):
 
     @abstractmethod
     def start_drawing(self, canvas: EditorCanvas, event: tk.Event):
-        canvas.shapes.append(self.shape_id)
+        canvas._shapes[self.shape_id] = self
 
     @abstractmethod
     def draw(self, canvas: EditorCanvas, event: tk.Event):
@@ -61,7 +65,7 @@ class _ShapeStrategy(ABC):
         pass
 
 
-class _DotStrategy(_ShapeStrategy):
+class _Dot(_Shape):
     def start_drawing(self, canvas: EditorCanvas, event: tk.Event):
         self.shape_id = canvas.create_oval(
             event.x - 1, event.y - 1,
@@ -80,7 +84,7 @@ class _DotStrategy(_ShapeStrategy):
         pass
 
 
-class _LineStrategy(_ShapeStrategy):
+class _Line(_Shape):
     def start_drawing(self, canvas: EditorCanvas, event: tk.Event):
         self.start_x, self.start_y = event.x, event.y
 
@@ -101,7 +105,7 @@ class _LineStrategy(_ShapeStrategy):
         pass
 
 
-class _RectangleStrategy(_ShapeStrategy):
+class _Rectangle(_Shape):
     def start_drawing(self, canvas: EditorCanvas, event: tk.Event):
         self.start_x, self.start_y = event.x, event.y
         self.shape_id = canvas.create_rectangle(
@@ -121,7 +125,7 @@ class _RectangleStrategy(_ShapeStrategy):
         pass
 
 
-class _EllipseStrategy(_ShapeStrategy):
+class _Ellipse(_Shape):
     def start_drawing(self, canvas: EditorCanvas, event: tk.Event):
         self.start_x, self.start_y = event.x, event.y
         self.shape_id = canvas.create_oval(
@@ -141,9 +145,9 @@ class _EllipseStrategy(_ShapeStrategy):
         pass
 
 
-_SHAPE_STRATEGIES = {
-    "Dot": _DotStrategy,
-    "Line": _LineStrategy,
-    "Rectangle": _RectangleStrategy,
-    "Ellipse": _EllipseStrategy,
+_SHAPES = {
+    "Dot": _Dot,
+    "Line": _Line,
+    "Rectangle": _Rectangle,
+    "Ellipse": _Ellipse,
 }

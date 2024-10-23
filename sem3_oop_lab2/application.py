@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from .editor_canvas import EditorCanvas, Shapes
+from .editor_canvas import EditorCanvas, ShapeNames
 
 
 class Application(tk.Tk):
@@ -22,7 +22,7 @@ class Application(tk.Tk):
         self._editor_canvas.pack(fill=tk.BOTH, expand=True)
         # self.menubar.grid(row=0, column=0)
 
-    def select_shape(self, shape: Shapes):
+    def select_shape(self, shape: ShapeNames):
         self._editor_canvas.select_shape(shape)
 
     def clear_canvas(self):
