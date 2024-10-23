@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from .drawing_canvas import DrawingCanvas, Shapes
+from .editor_canvas import EditorCanvas, Shapes
 
 
 class Application(tk.Tk):
@@ -12,18 +12,21 @@ class Application(tk.Tk):
         self.resizable(False, False)
         self.geometry("500x500")
 
-        self.drawing_canvas = DrawingCanvas(self)
-        self.menubar = _MenuBar(self)
+        self._editor_canvas = EditorCanvas(self)
+        self._menubar = _MenuBar(self)
 
         # Application config
-        self.config(menu=self.menubar, border=5)
+        self.config(menu=self._menubar, border=5)
 
         # Placing widgets
-        self.drawing_canvas.pack(fill=tk.BOTH, expand=True)
+        self._editor_canvas.pack(fill=tk.BOTH, expand=True)
         # self.menubar.grid(row=0, column=0)
 
     def select_shape(self, shape: Shapes):
-        self.drawing_canvas.select_shape(shape)
+        self._editor_canvas.select_shape(shape)
+
+    def clear_canvas(self):
+        self._editor_canvas.clear_canvas()
 
 
 class _MenuBar(tk.Menu):
@@ -31,6 +34,10 @@ class _MenuBar(tk.Menu):
         super().__init__(parent)
 
         file_menu = tk.Menu(self, tearoff=0)
+        file_menu.add_command(
+            label="Очистити",
+            command=parent.clear_canvas
+        )
 
         object_menu = tk.Menu(self, tearoff=0)
         object_menu.add_radiobutton(
